@@ -3,7 +3,9 @@ package org.nushackers.Minicraft;
 import com.mojang.ld22.Game;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.Window;
@@ -13,6 +15,7 @@ public class MinicraftActivity extends Activity {
 	
 	Game game;
 	ZMControlPad zmPad;
+	private PowerManager.WakeLock wakelock = null;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -49,8 +52,12 @@ public class MinicraftActivity extends Activity {
 		super.onResume();
 		if(!zmPad.isControllerConnected())
 			zmPad.connectController(this);
-		else
+		else {
+			PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+			wakelock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "Minicraft");
+			wakelock.acquire();
 			game.start();
+		}
 	}
 
 	@Override
@@ -60,5 +67,7 @@ public class MinicraftActivity extends Activity {
 			game.stop();
 		if(zmPad.isControllerConnected())
 			zmPad.disconnectController();
+		if(wakelock != null && wakelock.isHeld())
+			wakelock.release();
 	}
 }
